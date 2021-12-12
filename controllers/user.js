@@ -1,15 +1,27 @@
 const User = require('../models/user')
 const Deck = require('../models/Deck')
+const Joi = require('joi');
+const { schema } = require('../helpers/userValidator')
+const { JWT_SECRET } = require('../config/index')
+const JWT = require('jsonwebtoken')
 
-// callback 
-// const index = (req, res, next) => {
-//     User.find({}, function(err, users) {
-//         if (err) next(err)
-//         return res.status(200).json({
-//             dataSource: users
-//         })
-//     })
-// }
+const encodeToken = (userId) => {
+        return JWT.sign({
+            iss: 'JR',
+            sub: userId,
+            iat: new Date().getTime(),
+            exp: new Date().setDate(new Date().getDate() + 3)
+        }, JWT_SECRET)
+    }
+    // callback 
+    // const index = (req, res, next) => {
+    //     User.find({}, function(err, users) {
+    //         if (err) next(err)
+    //         return res.status(200).json({
+    //             dataSource: users
+    //         })
+    //     })
+    // }
 
 // const createNewUser = (req, res, next) => {
 //     const newUser = new User(req.body)
@@ -65,7 +77,7 @@ const singleUser = async function(req, res, next) {
 }
 
 const createNewUser = async function(req, res, next) {
-    const newUser = new User(req.body)
+    const newUser = new User(req.value.body)
     await newUser.save()
     return res.status(201).json({ user: newUser })
 }
@@ -88,6 +100,27 @@ const updateUser = async(req, res, next) => {
         message: 'Update user success'
     })
 }
+const secretUser = async(req, res, next) => {
+    return res.status(201).json({ status: 1 })
+
+}
+const singIn = async(req, res, next) => {
+    console.log(res)
+    return res.status(201).json({ token: encodeToken(req.user._id) })
+}
+const singUp = async(req, res, next) => {
+    const { firstName, lastName, email, password } = req.body
+    const fountUser = await User.findOne({ email })
+    console.log("FountUser", fountUser)
+    if (fountUser) return res.status(403).json({ status: -1, message: "Email trùng" })
+    const newUser = new User({ firstName, lastName, email, password })
+    newUser.save()
+    const token = encodeToken(newUser._id)
+    return res.status(201).json({ status: 1, message: "Thanh cong", token: token })
+}
+const singInWithGoogle = async(req, res, next) => {
+    return res.status(201).json({ token: encodeToken(req.user._id) })
+}
 module.exports = {
     getAllUser: index,
     createUser: createNewUser,
@@ -95,5 +128,9 @@ module.exports = {
     replaceUser: replaceUser,
     updateUser: updateUser,
     getUserDesk: getUserDesk,
-    newUserDesk: newUserDesk
+    newUserDesk: newUserDesk,
+    secretUser: secretUser,
+    singIn: singIn,
+    singUp: singUp,
+    singInWithGoogle: singInWithGoogle
 }

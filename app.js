@@ -1,3 +1,5 @@
+require('dotenv').config()
+const passport = require('passport')
 const bodyParser = require('body-parser');
 const espress = require('express');
 const logger = require('morgan');
@@ -12,7 +14,9 @@ mogoClient.connect('mongodb://localhost:27017/').then(() => console.log('Connect
 //Middlewares
 app.use(bodyParser.json())
 app.use(logger('dev'))
-    // Routes
+app.use(passport.initialize());
+
+// Routes
 app.use('/', users)
 app.get('/', (req, res, next) => {
     return res.status(200).json({
@@ -32,8 +36,7 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
     const error = app.get('env') === 'development' ? err : {}
     const status = err.status || 500
-
-    // response to client
+        // response to client
     return res.status(status).json({
         error: {
             message: error.message
